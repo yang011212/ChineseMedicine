@@ -1,1 +1,1 @@
-D:/App/Anaconda/envs/yolo12t/python.exe g:/projects/ChineseMedicine/app.py
+D:/App/Anaconda/envs/yolo12t/python.exe g:/projects/ChineseMedicine2/app.py

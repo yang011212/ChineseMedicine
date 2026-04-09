@@ -5,6 +5,7 @@ import gradio as gr
 import json
 import uuid
 import requests
+import base64
 from PIL import Image, ImageDraw, ImageFont
 
 def safe_imread(path, flag=1):
@@ -192,14 +193,15 @@ def process_image(img_path):
     
     # 中间图：裁剪并叠加绿色舌体蒙版
     # 1 -> 舌体
-    mid_img_bgr = overlay_mask(cropped_img, cropped_mask, color=(0, 255, 0), alpha=0.4)
+    mid_img_bgr = cropped_img.copy()
+    mid_img_bgr[cropped_mask == 0] = (0, 0, 0) # Remove background
     mid_img_rgb = cv2.cvtColor(mid_img_bgr, cv2.COLOR_BGR2RGB)
     
     # ---- 步骤 1：产出第一阶段结果（分割图片和推理速度） ----
     yield mid_img_rgb, None, "正在进行脏器区域分析...", "", None, time_str
     
     # 右侧图：五大脏器区域划分
-    right_img_bgr = cropped_img.copy()
+    right_img_bgr = mid_img_bgr.copy()
     
     organ_names_map = {
         "kidney": "肾",
@@ -263,19 +265,37 @@ def process_image(img_path):
 # ========================
 # 构建 Gradio UI
 # ========================
-css = """
-.sticky-header {
+bg_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "ui", "backpic.png"))
+if os.path.isfile(bg_image_path):
+    with open(bg_image_path, "rb") as f:
+        bg_image_base64 = base64.b64encode(f.read()).decode("utf-8")
+    bg_css_value = f"url('data:image/png;base64,{bg_image_base64}')"
+else:
+    bg_css_value = "none"
+
+css = f"""
+.gradio-container {{
+    background-image: {bg_css_value};
+    background-color: #FFF9DB;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}}
+.sticky-header {{
     position: sticky;
     top: 0;
     z-index: 1000;
-    background-color: var(--body-background-fill, white);
+    background-color: transparent !important;
     padding: 15px 0;
     border-bottom: 1px solid var(--border-color-primary, #e5e7eb);
     margin-bottom: 20px;
     text-align: center;
-}
-.header-title { font-size: 2.2em; font-weight: bold; margin: 0; }
-.subtitle { color: gray; font-size: 14px; margin-top: 5px; margin-bottom: 0px; }
+    border-radius: 10px;
+    backdrop-filter: none;
+}}
+.header-title {{ font-size: 2.2em; font-weight: bold; margin: 0; }}
+.subtitle {{ color: gray; font-size: 14px; margin-top: 5px; margin-bottom: 0px; }}
 """
 
 with gr.Blocks(title="AI中医舌诊", css=css) as demo:
@@ -324,4 +344,4 @@ with gr.Blocks(title="AI中医舌诊", css=css) as demo:
     btn_export.click(fn=trigger_export, inputs=[export_file], outputs=[export_file])
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, inbrowser=True)
+    demo.launch(server_name="0.0.0.0", server_port=7860, inbrowser=True, allowed_paths=[os.path.abspath(os.path.join(os.path.dirname(__file__), "ui"))])

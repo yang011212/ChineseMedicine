@@ -20,8 +20,8 @@ def main():
         if not os.path.isfile(pred):
             continue
 
-        img = cv2.cvtColor(cv2.imread(p, 1), cv2.COLOR_BGR2RGB)
-        prd = cv2.cvtColor(cv2.imread(pred, 1), cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(cv2.imdecode(np.fromfile(p, dtype=np.uint8), 1), cv2.COLOR_BGR2RGB)
+        prd = cv2.cvtColor(cv2.imdecode(np.fromfile(pred, dtype=np.uint8), 1), cv2.COLOR_BGR2RGB)
 
         plt.figure(figsize=(10, 5))
         plt.subplot(1, 2, 1)

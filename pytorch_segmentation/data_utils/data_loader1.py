@@ -84,7 +84,7 @@ def get_image_array(image_input, width, height, imgNorm="sub_mean"):
     elif isinstance(image_input, six.string_types):
         if not os.path.isfile(image_input):
             raise DataLoaderError("get_image_array: path {0} doesn't exist".format(image_input))
-        img = cv2.imread(image_input, 1)
+        img = cv2.imdecode(np.fromfile(image_input, dtype=np.uint8), 1)
     else:
         raise DataLoaderError("get_image_array: Can't process input type {0}".format(str(type(image_input))))
 
@@ -107,7 +107,7 @@ def get_segmentation_array(image_input, nClasses, width, height):
     elif isinstance(image_input, six.string_types):
         if not os.path.isfile(image_input):
             raise DataLoaderError("get_segmentation_array: path {0} doesn't exist".format(image_input))
-        img = cv2.imread(image_input, 0)
+        img = cv2.imdecode(np.fromfile(image_input, dtype=np.uint8), 0)
     else:
         raise DataLoaderError("get_segmentation_array: Unsupported input type: {}".format(type(image_input)))
 
@@ -145,8 +145,8 @@ class SegmentationDataset(Dataset):
     def __getitem__(self, idx):
         image_path, seg_path = self.image_seg_pairs[idx]
 
-        image = cv2.imread(image_path, 1)
-        segmentation = cv2.imread(seg_path, 0)
+        image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), 1)
+        segmentation = cv2.imdecode(np.fromfile(seg_path, dtype=np.uint8), 0)
         if image is None:
             raise DataLoaderError("Unable to read image: {}".format(image_path))
         if segmentation is None:
